@@ -1,0 +1,102 @@
+---
+title: "Task"
+author: "Student Number: 2967794j"
+number-sections: true
+format: 
+  html:
+    embed-resources: true
+    code-tools: true
+  pdf: default
+editor_options: 
+  chunk_output_type: console
+execute:
+  echo: false
+  eval: true
+  warning: false
+  message: false
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+```{r}
+#| label: libraries
+library(ggplot2)
+library(tidyverse)
+library(gt)
+library(patchwork)
+library(gridExtra)
+library(moderndive)
+```
+
+```{r}
+#| label: data
+cats <- read.csv("C:/Users/2967794j/Desktop/cats.csv")
+```
+
+# Introduction {#sec-Intro}
+
+this is a document
+
+# Exploratory Data Analysis {#sec-EDA}
+displays the mean, median and standard deviation for sepal width and length for each of the three different species of iris. From @tbl-summary, we can see that the sepal length is, on average, greater than sepal width. The species *v.* *setosa* has the shortest, on average, sepal length, followed by *v.* *versicolor* and then *v.* *virginica* with the longest average petal length. However, the species *setosa* has the largest, on average, sepal width, followed by *v.* *virginica* and *v.* *versicolor*, respectively. From the standard deviation, the variability in sepal width is relatively similar for each species, however, there is more variability in sepal length, with the standard deviation for the species *v.* *virginica* almost twice that of the species *v.* *setosa*.
+
+```{r}
+#| echo: false
+#| label: tbl-summary
+#| tbl-cap:  Mean, median and standard deviation (sd) min max iqr sample_size of cats.
+cats |>
+summarize('Mean' = mean(Hwt),
+'Median' = median(Hwt),
+'St.Dev' = sd(Hwt),
+'Min' = min(Hwt),
+'Max' = max(Hwt),
+'IQR' = quantile(Hwt,0.75)-quantile(Hwt,0.25),
+'Sample_size' = n(),
+.by = Sex) |>
+gt() |>
+fmt_number(decimals=2) |>
+cols_label(
+Mean = html("Mean"),
+Median = html("Median"),
+St.Dev = html("Std. Dev"),
+Min = html("Minimum"),
+Max = html("Maximum"),
+IQR = html("Interquartile Range"),
+Sample_size = html("Sample Size")
+)
+```
+
+# Formal DataAnalysis {#sec-FDA}
+$$\widehat{\mbox{Hwt}} = \widehat{\alpha} +
+\widehat{\beta}_{\mbox{Male}} \cdot \mathbb{I}_{\mbox{Male}}(x) $$
+where
+
+• the intercept  $\widehat{\alpha}$ is the mean heart weight for the baseline category
+of Females;
+
+• $\widehat{\beta}_{\mbox{Male}}$ is the difference in the mean heart weight
+of a Males relative to the baseline category Females; and
+
+• 𝕀Male(𝑥) $\mathbb{I}_{\mbox{Male}}(x)$ is an indicator function such that
+𝕀Male(𝑥) = { 1 if Sex of 𝑥th observation is Male,
+0 Otherwise.
+$$\mathbb{I}_{\mbox{Male}}(x)=\left\{
+\begin{array}{ll}
+1 ~~~ \mbox{if Sex of} ~ x \mbox{th observation is Male},\\
+0 ~~~ \mbox{Otherwise}.\\
+\end{array}
+\right.$$
+When this model is fitted to the data, the following estimates of $\widehat{\alpha}$ (intercept) and $\mathbb{I}_{\mbox{Male}}(x)$
+(SexM) are returned:
+```{r}
+model <- lm(Hwt ~ Sex, data = cats)
+Coefs <- round(coef(model), 3)
+table_values <- get_regression_table(model)
+table_values |>
+gt() |>
+fmt_number(decimals=2) |>
+tab_style(style = cell_text(weight = "bold"),
+locations = cells_column_labels())
+```
+# Conclusions {#sec-Conc}
