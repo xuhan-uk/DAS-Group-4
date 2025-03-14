@@ -31,29 +31,29 @@ library(moderndive)
 
 ```{r}
 #| label: data
-cats <- read.csv("C:/Users/2967794j/Desktop/cats.csv")
+data <- read.csv("dataset04.csv")
+data <- data %>%
+  select(-Region)%>%
+  relocate(6, .before = everything())
+colnames(data) <- c("Family_members","Income","Food_Expenditure","Sex","Head_Age","Household_Type","Floor_Area","House_Age","Num_bedrooms","Electricity")
 ```
 
 # Introduction {#sec-Intro}
 
-this is a document
-
 # Exploratory Data Analysis {#sec-EDA}
-displays the mean, median and standard deviation for sepal width and length for each of the three different species of iris. From @tbl-summary, we can see that the sepal length is, on average, greater than sepal width. The species *v.* *setosa* has the shortest, on average, sepal length, followed by *v.* *versicolor* and then *v.* *virginica* with the longest average petal length. However, the species *setosa* has the largest, on average, sepal width, followed by *v.* *virginica* and *v.* *versicolor*, respectively. From the standard deviation, the variability in sepal width is relatively similar for each species, however, there is more variability in sepal length, with the standard deviation for the species *v.* *virginica* almost twice that of the species *v.* *setosa*.
 
 ```{r}
 #| echo: false
-#| label: tbl-summary
-#| tbl-cap:  Mean, median and standard deviation (sd) min max iqr sample_size of cats.
-cats |>
-summarize('Mean' = mean(Hwt),
-'Median' = median(Hwt),
-'St.Dev' = sd(Hwt),
-'Min' = min(Hwt),
-'Max' = max(Hwt),
-'IQR' = quantile(Hwt,0.75)-quantile(Hwt,0.25),
-'Sample_size' = n(),
-.by = Sex) |>
+#| label: tbl-summary-Family-members
+#| tbl-cap:  Mean, median and standard deviation (sd) min max iqr sample_size of Family_members.
+data |>
+summarize('Mean' = mean(Family_members),
+'Median' = median(Family_members),
+'St.Dev' = sd(Family_members),
+'Min' = min(Family_members),
+'Max' = max(Family_members),
+'IQR' = quantile(Family_members,0.75)-quantile(Family_members,0.25),
+'Sample_size' = n()) |>
 gt() |>
 fmt_number(decimals=2) |>
 cols_label(
@@ -67,36 +67,226 @@ Sample_size = html("Sample Size")
 )
 ```
 
-# Formal DataAnalysis {#sec-FDA}
-$$\widehat{\mbox{Hwt}} = \widehat{\alpha} +
-\widehat{\beta}_{\mbox{Male}} \cdot \mathbb{I}_{\mbox{Male}}(x) $$
-where
-
-• the intercept  $\widehat{\alpha}$ is the mean heart weight for the baseline category
-of Females;
-
-• $\widehat{\beta}_{\mbox{Male}}$ is the difference in the mean heart weight
-of a Males relative to the baseline category Females; and
-
-• 𝕀Male(𝑥) $\mathbb{I}_{\mbox{Male}}(x)$ is an indicator function such that
-𝕀Male(𝑥) = { 1 if Sex of 𝑥th observation is Male,
-0 Otherwise.
-$$\mathbb{I}_{\mbox{Male}}(x)=\left\{
-\begin{array}{ll}
-1 ~~~ \mbox{if Sex of} ~ x \mbox{th observation is Male},\\
-0 ~~~ \mbox{Otherwise}.\\
-\end{array}
-\right.$$
-When this model is fitted to the data, the following estimates of $\widehat{\alpha}$ (intercept) and $\mathbb{I}_{\mbox{Male}}(x)$
-(SexM) are returned:
 ```{r}
-model <- lm(Hwt ~ Sex, data = cats)
-Coefs <- round(coef(model), 3)
-table_values <- get_regression_table(model)
-table_values |>
+#| echo: false
+#| label: tbl-summary-Income
+#| tbl-cap:  Mean, median and standard deviation (sd) min max iqr sample_size of Income.
+data |>
+summarize('Mean' = mean(Income),
+'Median' = median(Income),
+'St.Dev' = sd(Income),
+'Min' = min(Income),
+'Max' = max(Total.Household.Income),
+'IQR' = quantile(Total.Household.Income,0.75)-quantile(Total.Household.Income,0.25),
+'Sample_size' = n()) |>
 gt() |>
 fmt_number(decimals=2) |>
-tab_style(style = cell_text(weight = "bold"),
-locations = cells_column_labels())
+cols_label(
+Mean = html("Mean"),
+Median = html("Median"),
+St.Dev = html("Std. Dev"),
+Min = html("Minimum"),
+Max = html("Maximum"),
+IQR = html("Interquartile Range"),
+Sample_size = html("Sample Size")
+)
 ```
+
+```{r}
+#| echo: false
+#| label: tbl-summary-Food_Expenditure
+#| tbl-cap:  Mean, median and standard deviation (sd) min max iqr sample_size of Food_Expenditure.
+data |>
+summarize('Mean' = mean(Total.Food.Expenditure),
+'Median' = median(Total.Food.Expenditure),
+'St.Dev' = sd(Total.Food.Expenditure),
+'Min' = min(Total.Food.Expenditure),
+'Max' = max(Total.Food.Expenditure),
+'IQR' = quantile(Total.Food.Expenditure,0.75)-quantile(Total.Food.Expenditure,0.25),
+'Sample_size' = n()) |>
+gt() |>
+fmt_number(decimals=2) |>
+cols_label(
+Mean = html("Mean"),
+Median = html("Median"),
+St.Dev = html("Std. Dev"),
+Min = html("Minimum"),
+Max = html("Maximum"),
+IQR = html("Interquartile Range"),
+Sample_size = html("Sample Size")
+)
+```
+
+```{r}
+#| echo: false
+#| label: tbl-summary-Head_Age
+#| tbl-cap:  Mean, median and standard deviation (sd) min max iqr sample_size of Head_Age.
+data |>
+summarize('Mean' = mean(Head_Age),
+'Median' = median(Head_Age),
+'St.Dev' = sd(Head_Age),
+'Min' = min(Head_Age),
+'Max' = max(Head_Age),
+'IQR' = quantile(Head_Age,0.75)-quantile(Head_Age,0.25),
+'Sample_size' = n()) |>
+gt() |>
+fmt_number(decimals=2) |>
+cols_label(
+Mean = html("Mean"),
+Median = html("Median"),
+St.Dev = html("Std. Dev"),
+Min = html("Minimum"),
+Max = html("Maximum"),
+IQR = html("Interquartile Range"),
+Sample_size = html("Sample Size")
+)
+```
+
+```{r}
+#| echo: false
+#| label: tbl-summary-Floor_Area
+#| tbl-cap:  Mean, median and standard deviation (sd) min max iqr sample_size of Floor_Area.
+data |>
+summarize('Mean' = mean(Floor_Area),
+'Median' = median(Floor_Area),
+'St.Dev' = sd(Floor_Area),
+'Min' = min(Floor_Area),
+'Max' = max(Floor_Area),
+'IQR' = quantile(Floor_Area,0.75)-quantile(Floor_Area,0.25),
+'Sample_size' = n()) |>
+gt() |>
+fmt_number(decimals=2) |>
+cols_label(
+Mean = html("Mean"),
+Median = html("Median"),
+St.Dev = html("Std. Dev"),
+Min = html("Minimum"),
+Max = html("Maximum"),
+IQR = html("Interquartile Range"),
+Sample_size = html("Sample Size")
+)
+```
+
+```{r}
+#| echo: false
+#| label: tbl-summary-House_Age
+#| tbl-cap:  Mean, median and standard deviation (sd) min max iqr sample_size of House_Age.
+data |>
+summarize('Mean' = mean(House_Age),
+'Median' = median(House_Age),
+'St.Dev' = sd(House_Age),
+'Min' = min(House_Age),
+'Max' = max(House_Age),
+'IQR' = quantile(House_Age,0.75)-quantile(House_Age,0.25),
+'Sample_size' = n()) |>
+gt() |>
+fmt_number(decimals=2) |>
+cols_label(
+Mean = html("Mean"),
+Median = html("Median"),
+St.Dev = html("Std. Dev"),
+Min = html("Minimum"),
+Max = html("Maximum"),
+IQR = html("Interquartile Range"),
+Sample_size = html("Sample Size")
+)
+```
+
+```{r}
+#| echo: false
+#| label: tbl-summary-Num_bedrooms
+#| tbl-cap:  Mean, median and standard deviation (sd) min max iqr sample_size of Num_bedrooms.
+data |>
+summarize('Mean' = mean(Num_bedrooms),
+'Median' = median(Num_bedrooms),
+'St.Dev' = sd(Num_bedrooms),
+'Min' = min(Num_bedrooms),
+'Max' = max(Num_bedrooms),
+'IQR' = quantile(Num_bedrooms,0.75)-quantile(Num_bedrooms,0.25),
+'Sample_size' = n()) |>
+gt() |>
+fmt_number(decimals=2) |>
+cols_label(
+Mean = html("Mean"),
+Median = html("Median"),
+St.Dev = html("Std. Dev"),
+Min = html("Minimum"),
+Max = html("Maximum"),
+IQR = html("Interquartile Range"),
+Sample_size = html("Sample Size")
+)
+```
+
+```{r}
+#| echo: false
+#| label: tbl-summary-Sex
+#| tbl-cap:  Mean, median and standard deviation (sd) min max iqr sample_size of Sex.
+data |>
+summarize('Sample_size' = n(),
+          .by=Sex) |>
+gt() |>
+fmt_number(decimals=2) |>
+cols_label(
+Sample_size = html("Sample Size")
+)
+```
+
+```{r}
+#| echo: false
+#| label: tbl-summary-Household_Type
+#| tbl-cap: Sample_size of Household_Type.
+data |>
+summarize('Sample_size' = n(),
+          .by=Household_Type) |>
+gt() |>
+fmt_number(decimals=2) |>
+cols_label(
+Sample_size = html("Sample Size")
+)
+```
+
+```{r}
+#| echo: false
+#| label: tbl-summary-Electricity
+#| tbl-cap: Sample_size of Electricity.
+data |>
+summarize('Sample_size' = n(),
+          .by=Electricity) |>
+gt() |>
+fmt_number(decimals=2) |>
+cols_label(
+Sample_size = html("Sample Size")
+)
+```
+
+```{r}
+#| echo: false
+#| fig-cap: Relationship between sepal width and sepal length by species.
+#| label: fig-scat
+#| fig-align: center
+#| fig-width: 4.5
+#| fig-height: 3.5
+
+
+ggplot(data, aes(x = Sex, y = Family_members, color = Sex)) +
+  geom_boxplot() +
+  labs(x = "Sex", y = "Family_members", color = "Sex") 
+```
+
+```{r}
+#| echo: false
+#| fig-cap: Relationship between sepal width and sepal length by species.
+#| label: fig-scat
+#| fig-align: center
+#| fig-width: 4.5
+#| fig-height: 3.5
+
+
+ggplot(data, aes(x = Household_Type, y = Family_members, color=Household_Type)) +
+  geom_boxplot() +
+  labs(x = "Household_Type", y = "Family_members", color = "Household_Type") 
+```
+
+# Formal DataAnalysis {#sec-FDA}
+
 # Conclusions {#sec-Conc}
