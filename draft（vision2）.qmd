@@ -27,6 +27,7 @@ library(gt)
 library(patchwork)
 library(gridExtra)
 library(moderndive)
+library(GGally)
 ```
 
 ```{r}
@@ -46,7 +47,7 @@ write.csv(data,"C:/Users/HP/Desktop/group work2/tidy_Data.csv")
 ```{r}
 #| echo: false
 #| label: tbl-summary-Family-members
-#| tbl-cap:  Mean, median and standard deviation (sd) min max iqr sample_size of Family_members.
+#| tbl-cap:  Mean, median and standard deviation (sd) min max iqr sample size of Total Number of Family members.
 data |>
 summarize('Mean' = mean(Family_members),
 'Median' = median(Family_members),
@@ -71,7 +72,7 @@ Sample_size = html("Sample Size")
 ```{r}
 #| echo: false
 #| label: tbl-summary-Income
-#| tbl-cap:  Mean, median and standard deviation (sd) min max iqr sample_size of Income.
+#| tbl-cap:  Mean, median and standard deviation (sd) min max iqr sample size of Total Household Income.
 data |>
 summarize('Mean' = mean(Income),
 'Median' = median(Income),
@@ -96,7 +97,7 @@ Sample_size = html("Sample Size")
 ```{r}
 #| echo: false
 #| label: tbl-summary-Food_Expenditure
-#| tbl-cap:  Mean, median and standard deviation (sd) min max iqr sample_size of Food_Expenditure.
+#| tbl-cap:  Mean, median and standard deviation (sd) min max iqr sample size of Total Food Expenditure.
 data |>
 summarize('Mean' = mean(Food_Expenditure),
 'Median' = median(Food_Expenditure),
@@ -121,7 +122,7 @@ Sample_size = html("Sample Size")
 ```{r}
 #| echo: false
 #| label: tbl-summary-Head_Age
-#| tbl-cap:  Mean, median and standard deviation (sd) min max iqr sample_size of Head_Age.
+#| tbl-cap:  Mean, median and standard deviation (sd) min max iqr sample size of Household Head Age.
 data |>
 summarize('Mean' = mean(Head_Age),
 'Median' = median(Head_Age),
@@ -146,7 +147,7 @@ Sample_size = html("Sample Size")
 ```{r}
 #| echo: false
 #| label: tbl-summary-Floor_Area
-#| tbl-cap:  Mean, median and standard deviation (sd) min max iqr sample_size of Floor_Area.
+#| tbl-cap:  Mean, median and standard deviation (sd) min max iqr sample size of House Floor Area.
 data |>
 summarize('Mean' = mean(Floor_Area),
 'Median' = median(Floor_Area),
@@ -171,7 +172,7 @@ Sample_size = html("Sample Size")
 ```{r}
 #| echo: false
 #| label: tbl-summary-House_Age
-#| tbl-cap:  Mean, median and standard deviation (sd) min max iqr sample_size of House_Age.
+#| tbl-cap:  Mean, median and standard deviation (sd) min max iqr sample size of House Age.
 data |>
 summarize('Mean' = mean(House_Age),
 'Median' = median(House_Age),
@@ -196,7 +197,7 @@ Sample_size = html("Sample Size")
 ```{r}
 #| echo: false
 #| label: tbl-summary-Num_bedrooms
-#| tbl-cap:  Mean, median and standard deviation (sd) min max iqr sample_size of Num_bedrooms.
+#| tbl-cap:  Mean, median and standard deviation (sd) min max iqr sample size of Number of bedrooms.
 data |>
 summarize('Mean' = mean(Num_bedrooms),
 'Median' = median(Num_bedrooms),
@@ -221,7 +222,7 @@ Sample_size = html("Sample Size")
 ```{r}
 #| echo: false
 #| label: tbl-summary-Sex
-#| tbl-cap:  Mean, median and standard deviation (sd) min max iqr sample_size of Sex.
+#| tbl-cap:  Mean, median and standard deviation (sd) min max iqr sample size of Sex.
 data |>
 summarize('Sample_size' = n(),
           .by=Sex) |>
@@ -235,7 +236,7 @@ Sample_size = html("Sample Size")
 ```{r}
 #| echo: false
 #| label: tbl-summary-Household_Type
-#| tbl-cap: Sample_size of Household_Type.
+#| tbl-cap: Sample_size of Household Type.
 data |>
 summarize('Sample_size' = n(),
           .by=Household_Type) |>
@@ -262,7 +263,7 @@ Sample_size = html("Sample Size")
 
 ```{r}
 #| echo: false
-#| fig-cap: Relationship between sepal width and sepal length by species.
+#| fig-cap: Relationship between family members and household head sex.
 #| label: fig-Sex
 #| fig-align: center
 ##| fig-width: 4.5
@@ -276,7 +277,7 @@ ggplot(data, aes(x = Sex, y = Family_members, color = Sex)) +
 
 ```{r}
 #| echo: false
-#| fig-cap: Relationship between sepal width and sepal length by species.
+#| fig-cap: Relationship between family members and type of household.
 #| label: fig-Household
 #| fig-align: center
 #| fig-width: 10
@@ -285,7 +286,112 @@ ggplot(data, aes(x = Sex, y = Family_members, color = Sex)) +
 
 ggplot(data, aes(x = Household_Type, y = Family_members, color=Household_Type)) +
   geom_boxplot() +
-  labs(x = "Household_Type", y = "Family_members", color = "Household_Type") 
+  labs(x = "Household_Type", y = "Family_members", color = "Household_Type")
+```
+
+```{r}
+#| echo: false
+#| fig-cap: Histograms of Total Number of Family members.
+#| label: fig-Family-members.
+#| fig-align: center
+#| fig-width: 5
+##| fig-height: 3.5
+
+ggplot(data, aes(x = Family_members)) +
+  geom_histogram(fill = "skyblue", color = "black") +
+  labs(title = "Distribution of Total Number of Family members", x = "Total Number of Family members", y = "Times")
+```
+
+```{r}
+#| echo: false
+#| fig-cap: Histograms of Total Number of Total Household Income.
+#| label: fig-Income
+#| fig-align: center
+#| fig-width: 5
+##| fig-height: 3.5
+ggplot(data, aes(x = Income)) +
+  geom_histogram(fill = "orange", color = "black") +
+  labs(title = "Distribution of Total Number of Total Household Income", x = "Total Household Income", y = "Times")
+```
+
+```{r}
+#| echo: false
+#| fig-cap: Histograms of Total Number of Total Food Expenditure.
+#| label: fig-Food-Expenditure
+#| fig-align: center
+#| fig-width: 5
+ggplot(data, aes(x = Food_Expenditure)) +
+  geom_histogram(fill = "green", color = "black") +
+  labs(title = "Distribution of Total Food Expenditure", x = "Total Food Expenditure", y = "Times")
+```
+
+```{r}
+#| echo: false
+#| fig-cap: Histograms of Total Number of Household Head Age.
+#| label: fig-Head-Age
+#| fig-align: center
+#| fig-width: 5
+ggplot(data, aes(x = Head_Age)) +
+  geom_histogram(fill = "blue", color = "black") +
+  labs(title = "Distribution of Household Head Age", x = "Household Head Age", y = "Times")
+```
+
+```{r}
+#| echo: false
+#| fig-cap: Histograms of Total Number of House Floor Area.
+#| label: fig-Floor-Area
+#| fig-align: center
+#| fig-width: 5
+ggplot(data, aes(x = Floor_Area)) +
+  geom_histogram(fill = "red", color = "black") +
+  labs(title = "Distribution of House Floor Area", x = "House Floor Area", y = "Times")
+```
+
+```{r}
+#| echo: false
+#| fig-cap: Histograms of Total Number of House Age.
+#| label: fig-House-Age
+#| fig-align: center
+#| fig-width: 5
+ggplot(data, aes(x = House_Age)) +
+  geom_histogram(fill = "pink", color = "black") +
+  labs(title = "Distribution of House Age", x = "House Age", y = "Times")
+```
+
+```{r}
+#| echo: false
+#| fig-cap: Histograms of Number of bedrooms.
+#| label: fig-bedrooms
+#| fig-align: center
+#| fig-width: 5
+ggplot(data, aes(x = Num_bedrooms)) +
+  geom_histogram(fill = "darkblue", color = "black") +
+  labs(title = "Distribution of Number of bedrooms", x = "Number of bedrooms", y = "Times")
+```
+
+```{r}
+#| echo: false
+#| fig-cap: Histograms of Total Number of Electricity.
+#| label: fig-Electricity
+#| fig-align: center
+#| fig-width: 5
+ggplot(data, aes(x = Electricity)) +
+  geom_histogram(fill = "lightgreen", color = "black") +
+  labs(title = "Distribution of Electricity", x = "Electricity", y = "Times")
+```
+
+```{r}
+#| echo: false
+#| fig-cap: Correlation plot.
+#| label: fig-correlationship
+#| fig-align: center
+#| fig-width: 15
+#| fig-height: 15
+
+
+ggpairs(data[, c("Family_members","Income", "Food_Expenditure",  "Head_Age",  "Floor_Area", "House_Age", "Num_bedrooms", "Electricity")], 
+        upper=list(continous=wrap("points",alpha=0.4,color="#d73027")),
+        lower="blank",axisLabels="none")
 ```
 
 # Formal DataAnalysis {#sec-FDA}
