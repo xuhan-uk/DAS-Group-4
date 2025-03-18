@@ -1,3 +1,4 @@
+#| echo: false
 ---
 title: "Group work 2"
 author: "Group 04"
@@ -37,7 +38,6 @@ data <- data %>%
   select(-Region)%>%
   relocate(6, .before = everything())
 colnames(data) <- c("Family_members","Income","Food_Expenditure","Sex","Head_Age","Household_Type","Floor_Area","House_Age","Num_bedrooms","Electricity")
-write.csv(data,"C:/Users/HP/Desktop/group work2/tidy_Data.csv")
 ```
 
 # Introduction {#sec-Intro}
@@ -395,5 +395,76 @@ ggpairs(data[, c("Family_members","Income", "Food_Expenditure",  "Head_Age",  "F
 ```
 
 # Formal DataAnalysis {#sec-FDA}
+# Fitting poisson model
+
+Due to the correlation plot,we find that the income variable has a relatively high correlation with food_expenditure, so firstly we try to select which one variable we should contain .
+
+Removing income containing food_expenditure
+
+```{r}
+# Fitting poisson model
+model1<-glm(Family_members~Food_Expenditure+Sex+Head_Age+Household_Type+Floor_Area+House_Age+Num_bedrooms+Electricity,data=data,family=poisson())
+summary(model1)
+```
+
+Removing food_expenditure containing income
+
+```{r}
+model2<-glm(Family_members~Income+Sex+Head_Age+Household_Type+Floor_Area+House_Age+Num_bedrooms+Electricity,data=data,family=poisson())
+summary(model2)
+```
+Comparing the two models ,model1 has the value of AIC is 8528.8 while the model 2 has the value of AIC is 8695.2 , so we decide to choose the model1 .
+
+```{r}
+coef(model1)
+```
+
+```{r}
+exp(coef(model1))
+```
+
+# Fitted values and residuals
+
+We can check that the large deviance is not the result of an outlier by looking at residual plots. Although the first two plots below are normal probability plots, we are only using them here to spot any points that don’t follow the straight line. We can also plot the deviance (or Pearson) residuals against the linear predictor to look for nonlinearity in the relationship between the fitted values and the residuals as shown in the third panel below.
+
+```{r}
+
+resp <- resid(model1, type = "pearson")
+resd <- resid(model1, type = "deviance")
+p1<- ggplot(model1, aes(sample = resp)) + geom_point(stat = "qq", color = "#7fc97f") + 
+  ylab("Pearson residuals")
+p2<- ggplot(model1, aes(sample = resd)) + geom_point(stat = "qq", color = "#7fc97f") + 
+  ylab("Deviance residuals") 
+p3<- ggplot(model1, aes(x = predict(model1, type="link"), y =resd))+ 
+  geom_point(col = "#7fc97f") + 
+  ylab("Deviance residuals") + xlab("Linear predictor")
+grid.arrange(p1, p2, p3, nrow = 1)
+```
+
+# overdispersion
+
+```{r}
+ggplot(model1, aes(x=log(fitted(model1)), y=log((data$Family_members-fitted(model1))^2)))+
+  geom_point(col="#f46d43") +
+  geom_abline(slope=1, intercept=0, col="#a6d96a", size=1) +
+  ylab(expression((y-hat(mu))^2)) + xlab(expression(hat(mu)))
+
+```
+
+# Using Quasi-poisson model
+
+```{r}
+model3<-glm(Family_members~Food_Expenditure+Sex+Head_Age+Household_Type+Floor_Area+House_Age+Num_bedrooms+Electricity,data=data,family=quasipoisson())
+summary(model3)
+```
+
+```{r}
+coef(model3)
+```
+
+```{r}
+exp(coef(model3))
+```
 
 # Conclusions {#sec-Conc}
+
