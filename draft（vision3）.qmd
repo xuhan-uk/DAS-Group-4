@@ -1,0 +1,141 @@
+---
+title: "Group work 2"
+author: "Group 04"
+number-sections: true
+format: 
+  html:
+    embed-resources: true
+    code-tools: true
+  pdf: default
+editor_options: 
+  chunk_output_type: console
+execute:
+  echo: false
+  eval: true
+  warning: false
+  message: false
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+```{r}
+#| label: libraries
+library(ggplot2)
+library(tidyverse)
+library(gt)
+library(patchwork)
+library(gridExtra)
+library(moderndive)
+library(GGally)
+```
+
+```{r}
+#| label: data
+data <- read.csv("dataset04.csv")
+data <- data %>%
+  select(-Region)%>%
+  relocate(6, .before = everything())
+colnames(data) <- c("Family_members","Income","Food_Expenditure","Sex","Head_Age","Household_Type","Floor_Area","House_Age","Num_bedrooms","Electricity")
+write.csv(data,"C:/Users/HP/Desktop/group work2/tidy_Data.csv")
+```
+
+# Introduction {#sec-Intro}
+
+# Exploratory Data Analysis {#sec-EDA}
+```{r}
+#| echo: false
+#| label: tbl-summary
+#| tbl-cap:  Mean, median and standard deviation (sd) min max iqr sample size of each factor.
+summary_table <- tibble(
+  Variable = c("Family_Members", "Income", "Food_Expenditure", "Head_Age", "Floor_Area", "House_Age", "Num_beadrooms"),
+  Mean = c(mean(data$Family_members), mean(data$Income), mean(data$Food_Expenditure), mean(data$Head_Age) ,mean(data$Floor_Area) ,mean(data$House_Age), mean(data$Num_bedrooms)),
+  Median = c(median(data$Family_members), median(data$Income), median(data$Food_Expenditure), median(data$Head_Age), median(data$Floor_Area) ,median(data$House_Age), median(data$Num_bedrooms)),
+  St.Dev = c(sd(data$Family_members), sd(data$Income), sd(data$Food_Expenditure), sd(data$Head_Age) ,sd(data$Floor_Area) ,sd(data$House_Age), sd(data$Num_bedrooms)),
+  Min = c(min(data$Family_members), min(data$Income), min(data$Food_Expenditure), min(data$Head_Age),min(data$Floor_Area) ,min(data$House_Age), min(data$Num_bedrooms)),
+  Max = c(max(data$Family_members), max(data$Income), max(data$Food_Expenditure), max(data$Head_Age),max(data$Floor_Area) ,max(data$House_Age), max(data$Num_bedrooms)),
+  IQR = c(
+    quantile(data$Family_members, 0.75) - quantile(data$Family_members, 0.25),
+    quantile(data$Income, 0.75) - quantile(data$Income, 0.25),
+    quantile(data$Food_Expenditure, 0.75) - quantile(data$Food_Expenditure, 0.25),
+    quantile(data$Head_Age, 0.75) - quantile(data$Head_Age, 0.25),
+    quantile(data$Floor_Area, 0.75) - quantile(data$Floor_Area, 0.25),
+    quantile(data$House_Age, 0.75) - quantile(data$House_Age, 0.25),
+    quantile(data$Num_bedrooms, 0.75) - quantile(data$Num_bedrooms, 0.25)
+  ),
+  Sample_size = c(length(data$Family_members), length(data$Income), length(data$Food_Expenditure), length(data$Head_Age),length(data$Floor_Area),length(data$House_Age),length(data$Num_bedrooms))
+)
+
+
+summary_table |>
+  gt() |>
+  fmt_number(columns = vars(Mean, Median, St.Dev, Min, Max, IQR, Sample_size), decimals = 2) |>
+  cols_label(
+    Mean = html("Mean"),
+    Median = html("Median"),
+    St.Dev = html("Std. Dev"),
+    Min = html("Minimum"),
+    Max = html("Maximum"),
+    IQR = html("Interquartile Range"),
+    Sample_size = html("Sample Size")
+  )
+```
+
+```{r}
+#| echo: false
+#| fig-cap: Relationship between family members and household head sex.
+#| label: fig-Sex
+#| fig-align: center
+##| fig-width: 4.5
+##| fig-height: 3.5
+
+
+ggplot(data, aes(x = Sex, y = Family_members, color = Sex)) +
+  geom_boxplot() +
+  labs(x = "Sex", y = "Family_members", color = "Sex") 
+```
+
+```{r}
+#| echo: false
+#| fig-cap: Relationship between family members and type of household.
+#| label: fig-Household
+#| fig-align: center
+#| fig-width: 10
+##| fig-height: 3.5
+
+
+ggplot(data, aes(x = Household_Type, y = Family_members, color=Household_Type)) +
+  geom_boxplot() +
+  labs(x = "Household_Type", y = "Family_members", color = "Household_Type")
+```
+
+```{r}
+#| echo: false
+#| fig-cap: Histograms of Total Number of Family members.
+#| label: fig-Family-members.
+#| fig-align: center
+#| fig-width: 5
+##| fig-height: 3.5
+
+ggplot(data, aes(x = Family_members)) +
+  geom_histogram(fill = "skyblue", color = "black") +
+  labs(title = "Distribution of Total Number of Family members", x = "Total Number of Family members", y = "Times")
+```
+
+```{r}
+#| echo: false
+#| fig-cap: Correlation plot.
+#| label: fig-correlationship
+#| fig-align: center
+#| fig-width: 15
+#| fig-height: 15
+
+
+ggpairs(data[, c("Family_members","Income", "Food_Expenditure",  "Head_Age",  "Floor_Area", "House_Age", "Num_bedrooms", "Electricity")], 
+        upper=list(continous=wrap("points",alpha=0.4,color="#d73027")),
+        lower="blank",axisLabels="none")
+```
+
+# Formal DataAnalysis {#sec-FDA}
+
+# Conclusions {#sec-Conc}
