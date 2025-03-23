@@ -1,0 +1,685 @@
+---
+title: "Group work 2"
+author: "Group 04"
+number-sections: true
+format: 
+  html:
+    embed-resources: true
+    code-tools: true
+  pdf: default
+editor_options: 
+  chunk_output_type: console
+execute:
+  echo: false
+  eval: true
+  warning: false
+  message: false
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+```{r}
+#| label: libraries
+#| message: false
+library(ggplot2)
+library(tidyverse)
+library(gt)
+library(patchwork)
+library(gridExtra)
+library(moderndive)
+library(GGally)
+library(skimr)
+```
+
+```{r}
+#| label: data
+data <- read.csv("~/Documents/GitHub/DAS-Group-4/dataset04.csv")
+data <- data %>%
+  select(-Region)%>%
+  relocate(6, .before = everything())
+colnames(data) <- c("Family_members","Income","Food_Expenditure","Sex","Head_Age","Household_Type","Floor_Area","House_Age","Num_bedrooms","Electricity")
+write.csv(data,"tidy_Data.csv")
+```
+
+# Introduction {#sec-Intro}
+
+Understanding the factors that influence household size is crucial for
+policymakers in planning housing, utilities, and social programs. This
+study analyses data from the Family Income and Expenditure Survey (FIES)
+in the Philippines to identify key household-related variables that
+impact the number of people living in a household. Using a Generalized
+Linear Model (GLM), we will examine how factors such as household
+income, food expenditure, house size, number of bedrooms, and household
+head characteristics influence family size. The findings from this
+analysis can provide valuable insights for government officials to
+support effective resource allocation and housing policies across
+different regions in the Philippines.
+
+# Exploratory Data Analysis {#sec-EDA}
+
+```{r}
+#| echo: false
+#| label: tbl-summary
+#| tbl-cap:  Mean, median and standard deviation (sd) min max iqr sample size of each factor.
+summary_table <- tibble(
+  Variable = c("Family_Members", "Income", "Food_Expenditure", "Head_Age", "Floor_Area", "House_Age", "Num_beadrooms"),
+  Mean = c(mean(data$Family_members), mean(data$Income), mean(data$Food_Expenditure), mean(data$Head_Age) ,mean(data$Floor_Area) ,mean(data$House_Age), mean(data$Num_bedrooms)),
+  Median = c(median(data$Family_members), median(data$Income), median(data$Food_Expenditure), median(data$Head_Age), median(data$Floor_Area) ,median(data$House_Age), median(data$Num_bedrooms)),
+  St.Dev = c(sd(data$Family_members), sd(data$Income), sd(data$Food_Expenditure), sd(data$Head_Age) ,sd(data$Floor_Area) ,sd(data$House_Age), sd(data$Num_bedrooms)),
+  Min = c(min(data$Family_members), min(data$Income), min(data$Food_Expenditure), min(data$Head_Age),min(data$Floor_Area) ,min(data$House_Age), min(data$Num_bedrooms)),
+  Max = c(max(data$Family_members), max(data$Income), max(data$Food_Expenditure), max(data$Head_Age),max(data$Floor_Area) ,max(data$House_Age), max(data$Num_bedrooms)),
+  IQR = c(
+    quantile(data$Family_members, 0.75) - quantile(data$Family_members, 0.25),
+    quantile(data$Income, 0.75) - quantile(data$Income, 0.25),
+    quantile(data$Food_Expenditure, 0.75) - quantile(data$Food_Expenditure, 0.25),
+    quantile(data$Head_Age, 0.75) - quantile(data$Head_Age, 0.25),
+    quantile(data$Floor_Area, 0.75) - quantile(data$Floor_Area, 0.25),
+    quantile(data$House_Age, 0.75) - quantile(data$House_Age, 0.25),
+    quantile(data$Num_bedrooms, 0.75) - quantile(data$Num_bedrooms, 0.25)
+  ),
+  Sample_size = c(length(data$Family_members), length(data$Income), length(data$Food_Expenditure), length(data$Head_Age),length(data$Floor_Area),length(data$House_Age),length(data$Num_bedrooms))
+)
+
+
+summary_table |>
+  gt() |>
+  fmt_number(columns = vars(Mean, Median, St.Dev, Min, Max, IQR, Sample_size), decimals = 2) |>
+  cols_label(
+    Mean = html("Mean"),
+    Median = html("Median"),
+    St.Dev = html("Std. Dev"),
+    Min = html("Minimum"),
+    Max = html("Maximum"),
+    IQR = html("Interquartile Range"),
+    Sample_size = html("Sample Size")
+  )
+```
+
+@tbl-summary presents descriptive statistics for household-related
+variables. The number of family members has a mean of 4.53 and a median
+of 4.00, with a standard deviation of 2.22, indicating moderate
+variation in household size. Income shows a large discrepancy between
+the mean (182,984.80) and median (120,362.00), suggesting a skewed
+distribution, which may indicate that higher-income households could
+support larger families. Floor area has a high standard deviation
+(34.67), implying considerable variation in living space, which could
+influence household size. The number of bedrooms has a small
+interquartile range (1.00), suggesting most households have similar
+bedroom availability, which may constrain family size. These factors are
+key in analyzing what influences the number of people living in a
+household.
+
+```{r}
+#| echo: false
+#| fig-cap: Relationship between family members and household head sex.
+#| label: fig-Sex
+#| fig-align: center
+##| fig-width: 4.5
+##| fig-height: 3.5
+
+
+ggplot(data, aes(x = Sex, y = Family_members, color = Sex)) +
+  geom_boxplot() +
+  labs(x = "Sex", y = "Family_members", color = "Sex") 
+```
+
+@fig-Sex shows the relationship between family size and the sex of the
+household head. Households led by males tend to have a slightly higher
+median number of family members than those led by females. The spread of
+family sizes is also wider for male-headed households, with more
+outliers at the higher end, indicating that larger families are more
+commonly associated with male household heads.
+
+```{r}
+#| echo: false
+#| fig-cap: Relationship between family members and type of household.
+#| label: fig-Household
+#| fig-align: center
+#| fig-width: 10
+##| fig-height: 3.5
+
+
+ggplot(data, aes(x = Household_Type, y = Family_members, color=Household_Type)) +
+  geom_boxplot() +
+  labs(x = "Household_Type", y = "Family_members", color = "Household_Type")
+```
+
+@fig-Household illustrates the relationship between family size and
+household type. Extended families have the highest median number of
+family members, followed by households with two or more non-related
+members. Single-family households tend to have the smallest family size,
+with fewer extreme outliers. This suggests that household structure
+significantly influences the number of people living in a household,
+with extended families naturally accommodating more members.
+
+```{r}
+#| echo: false
+#| fig-cap: Histograms of Total Number of Family members.
+#| label: fig-Family-members.
+#| fig-align: center
+#| fig-width: 5
+##| fig-height: 3.5
+
+ggplot(data, aes(x = Family_members)) +
+  geom_histogram(fill = "skyblue", color = "black") +
+  labs(title = "Distribution of Total Number of Family members", x = "Total Number of Family members", y = "Times")
+```
+
+@fig-Family-members. illustrates the distribution of the total number of
+family members in the dataset. The distribution is right-skewed, with
+the majority of households having between 3 and 6 family members. The
+most common household size is 4 members, followed by households with 3
+and 5 members. Very few households have more than 10 members, and
+households with fewer than 3 members are also relatively rare. This
+suggests that medium-sized households are the most prevalent in the
+sample population, while both very small and very large families are
+less common.
+
+```{r}
+#| echo: false
+#| fig-cap: Correlation plot.
+#| label: fig-correlationship
+#| fig-align: center
+#| fig-width: 15
+#| fig-height: 15
+
+
+ggpairs(data[, c("Family_members","Income", "Food_Expenditure",  "Head_Age",  "Floor_Area", "House_Age", "Num_bedrooms", "Electricity")], 
+        upper=list(continous=wrap("points",alpha=0.4,color="#d73027")),
+        lower="blank",axisLabels="none")
+```
+
+@fig-correlationship presents a correlation plot of household-related
+variables. The number of family members has a weak positive correlation
+with income (0.124) and food expenditure (0.425), suggesting that
+higher-income households may support larger families, and food expenses
+increase accordingly. There is also a weak positive correlation between
+family size and the number of bedrooms (0.165), indicating that larger
+households tend to have more bedrooms. Other variables, such as house
+floor area and electricity access, show minimal correlation with family
+size. These insights suggest that economic factors and housing capacity
+may play a role in determining household size. A Generalized Linear
+Model (GLM) will further analyse these relationships.
+
+# Formal Data Analysis {#sec-FDA}
+
+**Firstly, due to the variable of Sex,Household_type,Electricity are
+category variables,so we set these as factor using factor()**
+
+```{r}
+# deal with the category varibales
+data$Sex<-factor(data$Sex)
+data$Household_Type<-factor(data$Household_Type)
+data$Electricity<-factor(data$Electricity)
+```
+
+```{r}
+data$log_Income <- log(data$Income)
+data$log_Food_Expenditure <- log(data$Food_Expenditure)
+skim(data)
+```
+
+**Then, we fit a generalized linear model with a Poisson family and log
+link between Family_members and explanatory variables:**
+
+```{r}
+# Fitting model1
+#full-model
+model1 <- glm(Family_members ~ Food_Expenditure +Income+Sex + Head_Age + 
+                    Household_Type + Floor_Area + House_Age + 
+                    Num_bedrooms + Electricity, family = poisson(link = "log"), data = data)
+summary(model1)
+```
+
+**Fit Poisson regression model 1 between family members and explanatory
+variables:**
+
+$$
+\log \left( \widehat{\text{Family Members}}_i \right) = \hat{\alpha} + \hat{\beta}_1 \cdot \text{Food Expenditure}_i + \hat{\beta}_2 \cdot \text{Income}_i + \hat{\beta}_3 \cdot \text{SexMale}_i + \hat{\beta}_4 \cdot \text{Head Age}_i + \hat{\beta}_5 \cdot \text{Household TypeSingle Family}_i + \hat{\beta}_6 \cdot \text{Household TypeTwo or More Nonrelated Persons/Members}_i + \hat{\beta}_7 \cdot \text{Floor Area}_i + \hat{\beta}_8 \cdot \text{House Age}_i + \hat{\beta}_9 \cdot \text{Num Bedrooms}_i + \hat{\beta}_{10} \cdot \text{Electricity}_i
+$$
+
+$$
+= 1.597 + 2.930 \times 10^{-6} \cdot \text{Food Expenditure}_i - 2.385 \times 10^{-7} \cdot \text{Income}_i + 2.631 \times 10^{-1} \cdot \text{SexMale}_i - 3.797 \times 10^{-3} \cdot \text{Head Age}_i - 3.467 \cdot \text{Household TypeSingle Family}_i - 1.058 \cdot \text{Household TypeTwo or More Nonrelated Persons/Members}_i - 4.940 \times 10^{-2} \cdot \text{Floor Area}_i - 3.715 \times 10^{-3} \cdot \text{House Age}_i + 5.011 \times 10^{-2} \cdot \text{Num Bedrooms}_i - 9.028 \times 10^{-2} \cdot \text{Electricity}_i
+$$
+
+Where:
+
+$\hat{\alpha} = 1.597$ is the intercept coefficient. It represents the
+log of the expected number of Family Members when all explanatory
+variables are zero. On the original scale, the expected number of family
+members is $\exp(1.597) \approx 4.94$.
+
+$\hat{\beta}_1 = 2.930 \times 10^{-6}$ is the coefficient for Food
+Expenditure. For every one unit increase in food expenditure, the log of
+the expected count of family members increases by
+$2.930 \times 10^{-6}$.
+
+The rate ratio is $\exp(2.930 \times 10^{-6}) \approx 1.00000293$, which
+indicates a very small positive association.
+
+$\hat{\beta}_2 = -2.385 \times 10^{-7}$ is the coefficient for Income.
+For every one unit increase in income, the log of the expected family
+members decreases by $2.385 \times 10^{-7}$.
+
+The rate ratio is $\exp(-2.385 \times 10^{-7}) \approx 0.99999976$,
+suggesting a very small negative effect.
+
+$\hat{\beta}_3 = 2.631 \times 10^{-1}$ is the coefficient for SexMale.
+Male-headed households are associated with an increase in the log of
+expected family members by $0.2631$.
+
+The rate ratio is $\exp(0.2631) \approx 1.301$, meaning male-headed
+households are expected to have about 30.1% more family members than
+female-headed households, holding other variables constant.
+
+$\hat{\beta}_4 = -3.797 \times 10^{-3}$ is the coefficient for Head Age.
+For each additional year of the household head's age, the log of
+expected family members decreases by $0.003797$.
+
+The rate ratio is $\exp(-0.003797) \approx 0.9962$, indicating that each
+additional year of the head’s age is associated with a 0.38% decrease in
+the expected number of family members.
+
+$\hat{\beta}_5 = -3.467$ is the coefficient for Household TypeSingle
+Family.
+
+The rate ratio is $\exp(-3.467) \approx 0.031$, meaning that households
+categorized as Single Family\` are expected to have about 96.9% fewer
+family members compared to the reference group.
+
+$\hat{\beta}_6 = -1.058$ is the coefficient for Household TypeTwo or
+More Nonrelated Persons/Members.
+
+The rate ratio is $\exp(-1.058) \approx 0.347$, meaning these households
+have an expected family size 65.3% lower than the reference group.
+
+$\hat{\beta}_7 = -4.940 \times 10^{-2}$ is the coefficient for Floor
+Area. For every one unit increase in floor area, the log of expected
+family members decreases by $0.0494$.
+
+The rate ratio is $\exp(-0.0494) \approx 0.9518$, suggesting a 4.82%
+decrease in family size for each unit increase in floor area.
+
+$\hat{\beta}_8 = -3.715 \times 10^{-3}$ is the coefficient for House
+Age. For each additional year of house age, the expected number of
+family members decreases slightly.
+
+The rate ratio is $\exp(-0.003715) \approx 0.9963$, or a 0.37% decrease
+per additional year.
+
+$\hat{\beta}_9 = 5.011 \times 10^{-2}$ is the coefficient for Num
+Bedrooms. For each additional bedroom, the log of expected family
+members increases by $0.05011$.
+
+The rate ratio is $\exp(0.05011) \approx 1.0514$, which means each extra
+bedroom is associated with a 5.14% increase in the expected number of
+family members.
+
+$\hat{\beta}_{10} = -9.028 \times 10^{-2}$ is the coefficient for
+Electricity.
+
+The rate ratio is $\exp(-0.09028) \approx 0.9137$, meaning that
+households with electricity have an expected family size 8.63% lower
+compared to those without electricity (assuming 1 = electricity, 0 = no
+electricity).
+
+This suggests that variables like Food Expenditure, SexMale, and Num
+Bedrooms have a positive association with family size, indicating that
+increases in these variables are associated with a larger number of
+family members. On the other hand, variables like Income, Head Age,
+Household Type, Floor Area, House Age, and Electricity have a negative
+association, suggesting that higher values or presence of these factors
+are linked to fewer family members.
+
+**Looking at the P-value,the number of the Floor_Area is 0.1464 large
+than the 0.05,so we delete it.**
+
+```{r}
+#Fitting model2
+#Delete Floor_Area 
+model2 <- glm(Family_members ~ Food_Expenditure +Income+Sex + Head_Age + 
+                    Household_Type  + House_Age + 
+                    Num_bedrooms + Electricity, family = poisson(link = "log"), data = data)
+summary(model2)
+```
+
+**After we deleted Floor_Area, we fit Poisson regression model 2 between
+family members and the rest of explanatory variables:**
+
+$$
+\log \left( \widehat{\text{Family Members}}_i \right) = \hat{\alpha} + \hat{\beta}_1 \cdot \text{Food Expenditure}_i + \hat{\beta}_2 \cdot \text{Income}_i + \hat{\beta}_3 \cdot \text{SexMale}_i + \hat{\beta}_4 \cdot \text{Head Age}_i + \hat{\beta}_5 \cdot \text{Household TypeSingle Family}_i + \hat{\beta}_6 \cdot \text{Household TypeTwo or More Nonrelated Persons/Members}_i + \hat{\beta}_7 \cdot \text{House Age}_i + \hat{\beta}_8 \cdot \text{Num Bedrooms}_i + \hat{\beta}_9 \cdot \text{Electricity}_i
+$$
+
+$$
+= 1.596 + 2.935 \times 10^{-6} \cdot \text{Food Expenditure}_i - 2.532 \times 10^{-7} \cdot \text{Income}_i + 2.634 \times 10^{-1} \cdot \text{SexMale}_i - 3.852 \times 10^{-3} \cdot \text{Head Age}_i - 3.470 \times 10^{-1} \cdot \text{Household TypeSingle Family}_i - 1.019 \times 10^{-1} \cdot \text{Household TypeTwo or More Nonrelated Persons/Members}_i - 3.760 \times 10^{-3} \cdot \text{House Age}_i + 4.445 \times 10^{-2} \cdot \text{Num Bedrooms}_i - 9.133 \times 10^{-2} \cdot \text{Electricity}_i
+$$
+
+Where:
+
+$\hat{\alpha} = 1.596$ is the intercept coefficient, representing the
+log of the expected number of Family Members when all explanatory
+variables equal zero. On the original scale, the expected number of
+family members is $\exp(1.596) \approx 4.94$.
+
+$\hat{\beta}_1 = 2.935 \times 10^{-6}$ for Food Expenditure suggests a
+very slight positive association. Each unit increase in food expenditure
+increases the expected count of family members by approximately
+$\exp(2.935 \times 10^{-6}) \approx 1.000002935$.
+
+$\hat{\beta}_2 = -2.532 \times 10^{-7}$ for Income indicates a slight
+negative association, where higher income slightly reduces the expected
+family count by a factor of
+$\exp(-2.532 \times 10^{-7}) \approx 0.999999747$.
+
+$\hat{\beta}_3 = 2.634 \times 10^{-1}$ for SexMale shows male-headed
+households have about $\exp(0.2634) \approx 1.3014$ times (approximately
+30.14%) more expected family members than female-headed households.
+
+$\hat{\beta}_4 = -3.852 \times 10^{-3}$ for Head Age indicates each
+additional year of the household head’s age decreases the expected
+family members by a factor of $\exp(-0.003852) \approx 0.9962$ (about a
+0.38% reduction).
+
+$\hat{\beta}_5 = -3.470 \times 10^{-1}$ for Household TypeSingle Family
+implies such households have $\exp(-0.3470) \approx 0.7067$ (about
+29.33% fewer) family members compared to the reference.
+
+$\hat{\beta}_6 = -1.019 \times 10^{-1}$ for Household TypeTwo or More
+Nonrelated Persons/Members shows these households have
+$\exp(-0.1019) \approx 0.9031$ (around 9.69% fewer) family members
+compared to the reference.
+
+$\hat{\beta}_7 = -3.760 \times 10^{-3}$ for House Age means each
+additional year of house age slightly reduces expected family members by
+a factor of $\exp(-0.003760) \approx 0.9962$, approximately a 0.38%
+decrease.
+
+$\hat{\beta}_8 = 4.445 \times 10^{-2}$ for Num Bedrooms suggests each
+additional bedroom increases expected family size by
+$\exp(0.04445) \approx 1.0455$, or about 4.55%.
+
+$\hat{\beta}_9 = -9.133 \times 10^{-2}$ for Electricity shows households
+with electricity have an expected family size
+$\exp(-0.09133) \approx 0.9127$, approximately 8.73% fewer than those
+without electricity.
+
+This model suggests that food expenditure, male-headed households, and
+number of bedrooms positively influence family size. Conversely, higher
+income, older household heads, household type, older houses, and
+availability of electricity are negatively associated with family size.
+
+```{r}
+#Fitting model3
+#Using the log transform
+model3 <- glm(Family_members ~ log_Food_Expenditure +log_Income+Sex + Head_Age + 
+                    Household_Type  + House_Age + 
+                    Num_bedrooms + Electricity, family = poisson(link = "log"), data = data)
+summary(model3)
+```
+
+**And then we use the log transform to fit Poisson regression model 3
+between family members and the rest of explanatory variables:**
+
+$$
+\log \left( \widehat{\text{Family Members}}_i \right) = \hat{\alpha} + \hat{\beta}_1 \cdot \text{log Food Expenditure}_i + \hat{\beta}_2 \cdot \text{log Income}_i + \hat{\beta}_3 \cdot \text{SexMale}_i + \hat{\beta}_4 \cdot \text{Head Age}_i + \hat{\beta}_5 \cdot \text{Household TypeSingle Family}_i + \hat{\beta}_6 \cdot \text{Household TypeTwo or More Nonrelated Persons/Members}_i + \hat{\beta}_7 \cdot \text{House Age}_i + \hat{\beta}_8 \cdot \text{Num Bedrooms}_i + \hat{\beta}_9 \cdot \text{Electricity}_i
+$$
+
+$$
+= -2.861 + 0.5764 \cdot \text{log Food Expenditure}_i - 0.1440 \cdot \text{log Income}_i + 0.2047 \cdot \text{SexMale}_i - 0.002736 \cdot \text{Head Age}_i - 0.2900 \cdot \text{Household TypeSingle Family}_i - 0.02888 \cdot \text{Household TypeTwo or More Nonrelated Persons/Members}_i - 0.003839 \cdot \text{House Age}_i + 0.01466 \cdot \text{Num Bedrooms}_i - 0.1582 \cdot \text{Electricity}_i
+$$
+
+Where:
+
+$\hat{\alpha} = -2.861$ is the intercept coefficient. It represents the
+log of the expected number of Family Members when all explanatory
+variables are zero. On the original scale, the expected number of family
+members is $\exp(-2.861) \approx 0.057$.
+
+$\hat{\beta}_1 = 0.5764$ for log Food Expenditure indicates a strong
+positive association. Each one-unit increase in log food expenditure
+increases the expected count of family members by a factor of
+$\exp(0.5764) \approx 1.779$, or approximately 77.9%.
+
+$\hat{\beta}_2 = -0.1440$ for log Income suggests a negative
+association. Each one-unit increase in log income reduces the expected
+count of family members by a factor of $\exp(-0.1440) \approx 0.866$, or
+about 13.4% fewer family members.
+
+$\hat{\beta}_3 = 0.2047$ for SexMale means male-headed households are
+expected to have $\exp(0.2047) \approx 1.227$ times more family members
+than female-headed households, an increase of about 22.7%.
+
+$\hat{\beta}_4 = -0.002736$ for Head Age implies each additional year in
+the household head’s age reduces the expected number of family members
+by a factor of $\exp(-0.002736) \approx 0.9973$, approximately a 0.27%
+decrease.
+
+$\hat{\beta}_5 = -0.2900$ for Household TypeSingle Family shows these
+households have $\exp(-0.2900) \approx 0.748$, or 25.2% fewer family
+members than the reference household type.
+
+$\hat{\beta}_6 = -0.02888$ for Household TypeTwo or More Nonrelated
+Persons/Members shows a negligible effect, with a factor of
+$\exp(-0.02888) \approx 0.9715$, or a 2.85% decrease (not statistically
+significant as p \> 0.05).
+
+$\hat{\beta}_7 = -0.003839$ for House Age indicates each additional year
+of house age reduces expected family members by a factor of
+$\exp(-0.003839) \approx 0.9962$, about a 0.38% decrease.
+
+$\hat{\beta}_8 = 0.01466$ for Num Bedrooms suggests each additional
+bedroom increases expected family size by
+$\exp(0.01466) \approx 1.0147$, or about 1.47% (not statistically
+significant as p \> 0.05).
+
+$\hat{\beta}_9 = -0.1582$ for Electricity shows households with
+electricity have an expected family size $\exp(-0.1582) \approx 0.8538$,
+or approximately 14.62% fewer family members than those without
+electricity.
+
+This model suggests that log food expenditure, male-headed households,
+and number of bedrooms positively influence family size. Conversely,
+higher log income, older household heads, household type, older houses,
+and having electricity are negatively associated with family size.
+
+```{r}
+#Fitting model4
+#Delete number of bedrooms
+model4 <- glm(Family_members ~ log_Food_Expenditure +log_Income+Electricity+Sex + Head_Age + 
+                    Household_Type  + House_Age 
+                    , family = poisson(link = "log"), data = data)
+summary(model4)
+```
+
+**After we deleted number of bedrooms, we fit Poisson regression model 4
+between family members and the rest of explanatory variables:**
+
+$$
+\log \left( \widehat{\text{Family Members}}_i \right) = \hat{\alpha} + \hat{\beta}_1 \cdot \text{log Food Expenditure}_i + \hat{\beta}_2 \cdot \text{log Income}_i + \hat{\beta}_3 \cdot \text{Electricity}_i + \hat{\beta}_4 \cdot \text{SexMale}_i + \hat{\beta}_5 \cdot \text{Head Age}_i + \hat{\beta}_6 \cdot \text{Household TypeSingle Family}_i + \hat{\beta}_7 \cdot \text{Household TypeTwo or More Nonrelated Persons/Members}_i + \hat{\beta}_8 \cdot \text{House Age}_i
+$$
+
+$$
+= -2.966 + 0.5802 \cdot \text{log Food Expenditure}_i - 0.1369 \cdot \text{log Income}_i - 0.1567 \cdot \text{Electricity}_i + 0.2030 \cdot \text{SexMale}_i - 0.002665 \cdot \text{Head Age}_i - 0.2908 \cdot \text{Household TypeSingle Family}_i - 0.03024 \cdot \text{Household TypeTwo or More Nonrelated Persons/Members}_i - 0.003698 \cdot \text{House Age}_i
+$$
+
+Where:
+
+$\hat{\alpha} = -2.966$ is the intercept coefficient. It represents the
+log of the expected number of Family Members when all explanatory
+variables are zero. On the original scale, the expected number of family
+members is $\exp(-2.966) \approx 0.051$.
+
+$\hat{\beta}_1 = 0.5802$ for log Food Expenditure indicates a strong
+positive association. Each one-unit increase in log food expenditure
+increases the expected count of family members by a factor of
+$\exp(0.5802) \approx 1.786$, or approximately 78.6%.
+
+$\hat{\beta}_2 = -0.1369$ for log Income suggests a negative
+association. Each one-unit increase in log income reduces the expected
+count of family members by a factor of $\exp(-0.1369) \approx 0.872$, or
+about 12.8% fewer family members.
+
+$\hat{\beta}_3 = -0.1567$ for Electricity shows households with
+electricity have an expected family size $\exp(-0.1567) \approx 0.855$,
+approximately 14.5% fewer family members than those without electricity.
+
+$\hat{\beta}_4 = 0.2030$ for SexMale means male-headed households are
+expected to have $\exp(0.2030) \approx 1.225$ times more family members
+than female-headed households, an increase of about 22.5%.
+
+$\hat{\beta}_5 = -0.002665$ for Head Age implies each additional year in
+the household head’s age reduces the expected number of family members
+by a factor of $\exp(-0.002665) \approx 0.9973$, approximately a 0.27%
+decrease.
+
+$\hat{\beta}_6 = -0.2908$ for Household TypeSingle Family shows these
+households have $\exp(-0.2908) \approx 0.748$, or 25.2% fewer family
+members than the reference household type.
+
+$\hat{\beta}_7 = -0.03024$ for Household TypeTwo or More Nonrelated
+Persons/Members shows a negligible effect, with a factor of
+$\exp(-0.03024) \approx 0.9702$, or a 2.98% decrease (not statistically
+significant as p \> 0.05).
+
+$\hat{\beta}_8 = -0.003698$ for House Age indicates each additional year
+of house age reduces expected family members by a factor of
+$\exp(-0.003698) \approx 0.9963$, about a 0.37% decrease.
+
+This model suggests that log food expenditure, male-headed households
+positively influence family size. Conversely, higher log income, older
+household heads, household type, older houses, and having electricity
+are negatively associated with family size.
+
+# Selecting models
+
+**In the previous analysis, variable selection was based on p-values to
+identify statistically significant predictors. In this section, model
+selection was conducted using AIC and BIC as criteria to compare overall
+model performance.**
+
+```{r}
+models <- list(model1, model2, model3, model4)
+select_table <- data.frame(
+  Model = paste0("model", 1:4),
+  AIC = sapply(models, AIC)
+)
+print(select_table)
+```
+
+**According to the table ,we find that model4 has the lowest AIC ,so we
+decide to choose the model 4 as our final model.**
+
+```{r}
+coef(model4)
+```
+
+```{r}
+exp(coef(model4))
+```
+
+# Fitted values and residuals
+
+```{r}
+resp <- resid(model4, type = "pearson")
+resd <- resid(model4, type = "deviance")
+p1<- ggplot(model4, aes(sample = resp)) + geom_point(stat = "qq", color = "#7fc97f") + 
+  ylab("Pearson residuals")
+p2<- ggplot(model4, aes(sample = resd)) + geom_point(stat = "qq", color = "#7fc97f") + 
+  ylab("Deviance residuals") 
+p3<- ggplot(model4, aes(x = predict(model1, type="link"), y =resd))+ 
+  geom_point(col = "#7fc97f") + 
+  ylab("Deviance residuals") + xlab("Linear predictor")
+grid.arrange(p1, p2, p3, nrow = 1)
+```
+
+```{r}
+ggplot(model4, aes(x=log(fitted(model4)), y=log((data$Family_members-fitted(model4))^2)))+
+  geom_point(col="#f46d43") +
+  geom_abline(slope=1, intercept=0, col="#a6d96a", size=1) +
+  ylab(expression((y-hat(mu))^2)) + xlab(expression(hat(mu)))
+
+```
+
+```{r}
+overdispersion_test <- sum(residuals(model4, type = "pearson")^2) / df.residual(model4)
+overdispersion_test
+```
+
+# Using Quasi-poisson model
+
+```{r}
+model4_quasi <- glm(Family_members ~ log_Food_Expenditure +log_Income+Electricity + Head_Age + 
+                    Household_Type  + House_Age + Sex
+                    , family = quasipoisson(link = "log"), data = data)
+summary(model4_quasi)
+```
+
+**Fit Quasi-Poisson regression model between family members and
+explanatory variables:**
+
+$$
+\log \left( \widehat{\text{Family Members}}_i \right) = \hat{\alpha} + \hat{\beta}_1 \cdot \text{log Food Expenditure}_i + \hat{\beta}_2 \cdot \text{log Income}_i + \hat{\beta}_3 \cdot \text{Electricity}_i + \hat{\beta}_4 \cdot \text{Head Age}_i + \hat{\beta}_5 \cdot \text{Household TypeSingle Family}_i + \hat{\beta}_6 \cdot \text{Household TypeTwo or More Nonrelated Persons/Members}_i + \hat{\beta}_7 \cdot \text{House Age}_i + \hat{\beta}_8 \cdot \text{SexMale}_i
+$$
+
+$$
+= -2.9657 + 0.5802 \cdot \text{log Food Expenditure}_i - 0.1369 \cdot \text{log Income}_i - 0.1567 \cdot \text{Electricity}_i - 0.002665 \cdot \text{Head Age}_i - 0.2907 \cdot \text{Household TypeSingle Family}_i - 0.03024 \cdot \text{Household TypeTwo or More Nonrelated Persons/Members}_i - 0.003698 \cdot \text{House Age}_i + 0.2030 \cdot \text{SexMale}_i
+$$
+
+Where:
+
+$\hat{\alpha} = -2.9657$ is the intercept coefficient. It represents the
+log of the expected number of Family Members when all explanatory
+variables are zero. On the original scale, the expected number of family
+members is $\exp(-2.9657) \approx 0.0514$.
+
+$\hat{\beta}_1 = 0.5802$ for log Food Expenditure indicates a strong
+positive association. Each one-unit increase in log food expenditure
+increases the expected count of family members by a factor of
+$\exp(0.5802) \approx 1.786$, or approximately 78.6%.
+
+$\hat{\beta}_2 = -0.1369$ for log Income suggests a negative
+association. Each one-unit increase in log income reduces the expected
+count of family members by a factor of $\exp(-0.1369) \approx 0.872$, or
+about 12.8% fewer family members.
+
+$\hat{\beta}_3 = -0.1567$ for Electricity shows households with
+electricity have an expected family size $\exp(-0.1567) \approx 0.855$,
+approximately 14.5% fewer family members than those without electricity.
+
+$\hat{\beta}_4 = -0.002665$ for Head Age implies each additional year in
+the household head’s age reduces the expected number of family members
+by a factor of $\exp(-0.002665) \approx 0.9973$, approximately a 0.27%
+decrease.
+
+$\hat{\beta}_5 = -0.2907$ for Household TypeSingle Family shows these
+households have $\exp(-0.2907) \approx 0.748$, or 25.2% fewer family
+members than the reference household type.
+
+$\hat{\beta}_6 = -0.03024$ for Household TypeTwo or More Nonrelated
+Persons/Members shows a negligible effect, with a factor of
+$\exp(-0.03024) \approx 0.9702$, or a 2.98% decrease (not statistically
+significant as p \> 0.05).
+
+$\hat{\beta}_7 = -0.003698$ for House Age indicates each additional year
+of house age reduces expected family members by a factor of
+$\exp(-0.003698) \approx 0.9963$, about a 0.37% decrease.
+
+$\hat{\beta}_8 = 0.2030$ for SexMale means male-headed households are
+expected to have $\exp(0.2030) \approx 1.225$ times more family members
+than female-headed households, an increase of about 22.5%.
+
+This Quasi-Poisson model suggests that log food expenditure and
+male-headed households positively influence family size. Conversely,
+higher log income, older household heads, household type, older houses,
+and having electricity are negatively associated with family size.
+
+```{r}
+coef(model4_quasi)
+```
+
+```{r}
+exp(coef(model4_quasi))
+```
+
+# Conclusions {#sec-Conc}
