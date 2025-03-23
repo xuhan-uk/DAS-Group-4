@@ -1,1 +1,7 @@
 ### Group 4
+## This study analyses data from the Family Income and Expenditure Survey (FIES) in the Philippines to identify key household-related variables that impact the number of people living in a household. We use the Quasi-Poisson to fit datas. 
+## This report demonstrates that the most influential household-related variables on the number of people living in a household are food expenditure, income, electricity access, household head’s sex and age, household type, and house age. These factors significantly affect household size.
+## After verification, we obtained the following model：
+## $$ \log \left( \widehat{\text{Family Members}}_i \right) = -2.9657 + 0.5802 \cdot \text{log Food Expenditure}_i - 0.1369 \cdot \text{log Income}_i - 0.1567 \cdot \text{Electricity}_i - 0.002665 \cdot \text{Head Age}_i - 0.2907 \cdot \text{Household TypeSingle Family}_i - 0.03024 \cdot \text{Household TypeTwo or More Nonrelated Persons/Members}_i - 0.003698 \cdot \text{House Age}_i + 0.2030 \cdot \text{SexMale}_i $$
+## The final results indicate: Positive influences on household size: higher food expenditure and male-headed households. Negative influences: higher income, access to electricity, older household heads, single-family household types, and older houses.
+## The model is the best in the current exploration, but we will make more attempts later, such as zero-inflated Poisson or negative binomial regression.
